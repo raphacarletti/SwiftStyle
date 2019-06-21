@@ -10,13 +10,16 @@ import UIKit
 import Cartography
 
 class HomeViewController: UIViewController {
-    enum Examples {
+    enum Examples: CaseIterable {
         case customAttributedString
+        case customLabel
 
         var text: String {
             switch self {
             case .customAttributedString:
                 return "Custom Attributed String"
+            case .customLabel:
+                return "Custom Label"
             }
         }
 
@@ -24,6 +27,8 @@ class HomeViewController: UIViewController {
             switch self {
             case .customAttributedString:
                 return CustomAttributedStringViewController()
+            case .customLabel:
+                return CustomLabelViewController()
             }
         }
     }
@@ -32,14 +37,14 @@ class HomeViewController: UIViewController {
         let tableView = UITableView()
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.register(CustomTableView.self, forCellReuseIdentifier: "cell")
         return tableView
     }()
 
-    let examples: [Examples] = [.customAttributedString]
+    let examples: [Examples] = Examples.allCases
     
     init() {
         super.init(nibName: nil, bundle: nil)
-        setupView()
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -48,7 +53,7 @@ class HomeViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
+        setupView()
     }
 
     private func setupView() {
@@ -72,9 +77,39 @@ extension HomeViewController: UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = UITableViewCell()
-        cell.textLabel?.text = examples[indexPath.row].text
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "cell") as? CustomTableView else {
+            return UITableViewCell()
+        }
+        cell.labelText = examples[indexPath.row].text
         return cell
+    }
+}
+
+private class CustomTableView: UITableViewCell {
+    lazy var label: UILabel = {
+        let label = UILabel()
+        return label
+    }()
+    var labelText: String = "" {
+        willSet {
+            label.text = newValue
+        }
+    }
+
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        addSubview(label)
+        constrain(self, label) { superView, label in
+            label.top == superView.top + 16
+            label.leading == superView.leading + 16
+            label.trailing == superView.trailing - 16
+            label.bottom == superView.bottom - 16
+
+        }
+    }
+
+    required init?(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
     }
 }
 
